@@ -1,7 +1,7 @@
 public class HangmanApp {
 
-    public static int mistakeCount = 1;
-    public static int lifeCount = 5;
+    public static int mistakeCount = 0;
+    public static int lifeCount = 6;
 
     public static void printHangman() {
         if (mistakeCount == 0 && lifeCount == 6) {
