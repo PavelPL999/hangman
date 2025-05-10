@@ -8,11 +8,15 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 public class HangmanApp {
 
-    public static int mistakeCount = 3;
-    public static int lifeCount = 3;
+    private static int mistakeCount = 3;
+    private static int lifeCount = 3;
+
+    // Создам один общий Scanner, чтобы избежать повторного открытия потока System.in
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         //printHangmanState();
@@ -108,6 +112,20 @@ public class HangmanApp {
         // get input
         // validate input
         // открывает букву/-ы или выводит сообщение, что такой буквы нет
+    }
+
+    public static char getInputPlayer() {
+        String input;
+        System.out.println("Введите букву: ");
+        do {
+            input = scanner.nextLine().trim().toLowerCase();
+
+            if (input.length() != 1 || !Character.isLetter(input.charAt(0))) {
+                System.out.println("Некорректный ввод. Попробуйте ещё раз.");
+            }
+        } while (input.length() != 1 || !Character.isLetter(input.charAt(0)));
+
+        return input.charAt(0);
     }
 
     public static void checkGameState() {
