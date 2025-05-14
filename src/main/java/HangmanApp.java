@@ -9,7 +9,7 @@ public class HangmanApp {
     private static final int MAX_MISTAKES = 6;
     private static final String GAME_STATE_PLAYER_WON = "Вы победили!";
     private static final String GAME_STATE_PLAYER_LOSS = "Вы проиграли!";
-    private static final String GAME_STATE_GAME_NOT_FINISHED = "Игра не закончена!";
+    private static final String GAME_STATE_NOT_FINISHED = "Игра не закончена!";
 
     private static int mistakeCount = 0;
     private static String usedLetters = "";
@@ -23,9 +23,7 @@ public class HangmanApp {
         System.out.println("Спасибо за игру!");
 
     }
-    // startGameRound() - запускает игровой цикл,
-    // после цикла одной игры (одно слово) спрашиваем - Хотите сыграть ещё раз? (д/н)
-    // д -> запускает новый startGameLoop();  н -> выходим из startGameRound() и заканчиваем всю игру
+
     public static void startGameRound() {
         boolean isPlayAgain;
         do {
@@ -36,25 +34,21 @@ public class HangmanApp {
         } while (isPlayAgain);
     }
 
-    // startGameLoop() — одна игра (одно слово)
     public static void startGameLoop() {
-        // Получаем случайное слово
         String word = getRandomWord();
-
         if (word == null) {
             System.out.println("Словарь пуст или не удалось загрузить слово.");
             return;
         }
-
         char[] currentGuess = resetGameState(word.length());
 
         // Каждый ход: игрок вводит букву -> проверяем состояние игры
-        // Если игра закончена — выводим результат и выходим из цикла
+        // Если игра закончена — выводим финальный результат и выходим из цикла
         while (true) {
             makePlayerTurn(word, currentGuess);
             String gameState = checkGameState(word, currentGuess, mistakeCount);
-            if (!gameState.equals(GAME_STATE_GAME_NOT_FINISHED)) {
-                printGameResult(word, currentGuess);
+            if (!gameState.equals(GAME_STATE_NOT_FINISHED)) {
+                printFinalResult(word);
                 break;
             }
         }
@@ -70,7 +64,16 @@ public class HangmanApp {
         return guess;
     }
 
-    // Метод getDictionaryList() отвечает за чтение словаря и получение списка слов для игры
+    public static String getRandomWord() {
+        List<String> dictionary = getDictionaryList();
+        if (dictionary.isEmpty()) {
+            System.out.println("Словарь пуст или не загружен.");
+            return null;
+        }
+
+        return dictionary.get(random.nextInt(dictionary.size()));
+    }
+
     public static List<String> getDictionaryList() {
         List<String> dictionary = new ArrayList<>();
             try {
@@ -91,22 +94,37 @@ public class HangmanApp {
             return dictionary;
         }
 
-    // Метод getRandomWord() генерирует случайное слово для игры
-    public static String getRandomWord() {
-        List<String> dictionary = getDictionaryList();
-        if (dictionary.isEmpty()) {
-            System.out.println("Словарь пуст или не загружен.");
-            return null;
+    public static void makePlayerTurn(String word, char[] currentGuess) {
+        char letter = getInputPlayer();
+        if (usedLetters.indexOf(letter) != -1) {
+            System.out.println("Вы уже вводили эту букву: " + letter + ". Введите другую букву.");
+            return;
+        }
+        usedLetters += letter;
+
+        boolean guessCorrect = false;
+        for (int i = 0; i < word.length(); i++) {
+            if (word.charAt(i) == letter) {
+                currentGuess[i] = letter;
+                guessCorrect = true;
+            }
+        }
+        // Выводим состояние игры после каждого хода игрока
+        if (guessCorrect) {
+            System.out.println("Верно! Буква " + letter + " есть в этом слове.");
+            printHangman(mistakeCount);
+        } else {
+            mistakeCount++;
+            System.out.println("Неверно! Буквы " + letter + " нет в этом слове.");
+            System.out.println("Ошибок допущено: " + mistakeCount + " из " + MAX_MISTAKES);
+            printHangman(mistakeCount);
         }
 
-        return dictionary.get(random.nextInt(dictionary.size()));
+        printGameState(currentGuess, usedLetters);
     }
 
-    // Метод getInputPlayer() отвечает за ввод буквы игроком
-    // Проверяем, что это русская буква; повторяем цикл, если ввод ошибочный
     public static char getInputPlayer() {
         String input;
-
         do {
             System.out.println("Введите одну букву: ");
             input = scanner.nextLine().trim().toLowerCase();
@@ -117,38 +135,6 @@ public class HangmanApp {
                 return input.charAt(0);
             }
         } while (true);
-    }
-
-    // makePlayerTurn - ход игрока
-    public static void makePlayerTurn(String word, char[] currentGuess) {
-        char letter = getInputPlayer();
-        // Получаем букву, проверяем - вводил ли игрок её раньше
-        if (usedLetters.indexOf(letter) != -1) {
-            System.out.println("Вы уже вводили эту букву: " + letter);
-        }
-
-        usedLetters += letter;
-
-        boolean guessCorrect = false;
-        // Если буква есть в слове — открываем её.
-        for (int i = 0; i < word.length(); i++) {
-            if (word.charAt(i) == letter) {
-                currentGuess[i] = letter;
-                guessCorrect = true;
-            }
-        }
-        // Печатаем состояние игры после хода игрока
-        // Если буквы нет — увеличиваем счётчик ошибок, выводим виселицу
-        if (guessCorrect) {
-            System.out.println("Верно! Буква " + letter + " есть в этом слове.");
-        } else {
-            mistakeCount++;
-            System.out.println("Неверно! Буквы " + letter + " нет в этом слове.");
-            System.out.println("Ошибок допущено: " + mistakeCount + " из " + MAX_MISTAKES);
-            printHangman(mistakeCount);
-        }
-
-        printGameState(currentGuess, usedLetters);
     }
 
     // Метод printGameState выводит состояние игры, показывает текущее слово (*а*а***) и использованные буквы
@@ -167,23 +153,22 @@ public class HangmanApp {
     }
 
     // checkGameState - проверка окончания игры (угадано ли слово, превышен лимит ошибок, игра не окончена))
-    public static String checkGameState(String word, char[] currentGuess, int mistakeCount) {
-        if (mistakeCount >= MAX_MISTAKES) {
+    public static String checkGameState(String word, char[] currentGuess, int mistakes) {
+        if (mistakes >= MAX_MISTAKES) {
             return GAME_STATE_PLAYER_LOSS;
         } else if (String.valueOf(currentGuess).equals(word)) {
             return GAME_STATE_PLAYER_WON;
         } else {
-            return GAME_STATE_GAME_NOT_FINISHED;
+            return GAME_STATE_NOT_FINISHED;
         }
     }
 
-    // printGameResult - выводим финальный результат (победа/поражение)
-    public static void printGameResult(String word, char[] currentGuess) {
+    // printGameFinalResult - выводим финальный результат (победа/поражение)
+    public static void printFinalResult(String word) {
         if (mistakeCount >= MAX_MISTAKES) {
-            printHangman(mistakeCount);
             System.out.println(GAME_STATE_PLAYER_LOSS + " Загаданное слово: " + word);
         } else {
-            System.out.println(GAME_STATE_PLAYER_WON + " Слово: " + word);
+            System.out.println(GAME_STATE_PLAYER_WON + " Загаданное слово: " + word);
         }
     }
 
